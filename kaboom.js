@@ -1,10 +1,9 @@
-import kaboom from 'https://unpkg.com/kaboom/dist/kaboom.mjs';
+import kaboom from './kaboom.mjs';
 
 // Configurations globales
 export const k = kaboom({
     background: [134, 135, 247],
-    width: 320,
-    height: 240,
+    fullscreen: true,
     scale: 2,
 });
 
@@ -18,6 +17,8 @@ loadSprite("emptyBox", "emptyBox.png");
 loadSprite("brick", "brick.png");
 loadSprite("coin", "coin.png");
 loadSprite("bigMushy", "bigMushy.png");
+loadSprite("flower", "flower.png");
+loadSprite("fireball", "fireball.png");
 loadSprite("pipeTop", "pipeTop.png");
 loadSprite("pipeBottom", "pipeBottom.png");
 loadSprite("shrubbery", "shrubbery.png");
