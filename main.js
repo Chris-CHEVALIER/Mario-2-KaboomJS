@@ -17,10 +17,11 @@ scene("start", () => {
 
 go("start");
 
-scene("game", (levelNumber = 0) => {
+scene("game", (levelNumber = 0, lifeNumber = 3) => {
     layers(["bg", "game", "ui"], "game");
 
     const level = addLevel(LEVELS[levelNumber], levelConf);
+    const music = play("theme", { loop: true })
 
     const scoreLabel = add([
         text("x0", { size: 12 }),
@@ -30,9 +31,24 @@ scene("game", (levelNumber = 0) => {
         { value: 0 }
     ]);
 
+    const lifeLabel = add([
+        text("x" + lifeNumber, { size: 12 }),
+        pos(17, 20),
+        layer("ui"),
+        fixed(),
+        { value: lifeNumber }
+    ]);
+
     add([
         sprite("coin", { width: 12 }),
         pos(7, 5),
+        layer("ui"),
+        fixed(),
+    ]);
+
+    add([
+        sprite("marioLife", { width: 12 }),
+        pos(7, 20),
         layer("ui"),
         fixed(),
     ]);
@@ -102,6 +118,7 @@ scene("game", (levelNumber = 0) => {
 
     onKeyPress("space", () => {
         if (player.isGrounded()) {
+            play(player.isBig ? "jumpBig" : "jumpSmall", { volume: 0.5 });
             player.jump();
             canSquash = true;
         }
@@ -111,6 +128,12 @@ scene("game", (levelNumber = 0) => {
         if (player.isFlaming()) {
             //player.sendFireball();
         }
+    });
+
+    onKeyPress("s", () => {
+        console.log("launch music");
+        var audio = new Audio("./assets/musics/main-theme.mp3");
+        audio.play();
     });
 
     player.onUpdate(() => {
@@ -134,13 +157,29 @@ scene("game", (levelNumber = 0) => {
         if (baddy.isAlive == false) return;
         if (player.isAlive == false) return;
         if (canSquash) {
+            play("goombaStomp", { volume: 0.5 });
             baddy.squash();
         } else {
             if (player.isBig) {
                 player.smaller();
             } else {
+                play("marioDies", { volume: 1 });
+                music.stop();
                 killed(player);
                 player.freeze();
+                lifeLabel.value--;
+                lifeNumber--;
+                lifeLabel.text = "x" + lifeLabel.value;
+                console.log(lifeLabel.value);
+                if (lifeLabel.value <= 0 || lifeNumber <= 0) {
+                    add([
+                        text("Game Over...", { size: 24 }),
+                        pos(toWorld(vec2(160, 120))),
+                        color(255, 0, 0),
+                        origin("center"),
+                        layer('ui'),
+                    ]);
+                }
             }
         }
     });
@@ -149,11 +188,14 @@ scene("game", (levelNumber = 0) => {
         if (koopa.isAlive == false) return;
         if (player.isAlive == false) return;
         if (canSquash) {
+            play("goombaStomp", { volume: 0.5 });
             koopa.toShell();
         } else {
             if (player.isBig) {
                 player.smaller();
             } else {
+                play("marioDies", { volume: 1 });
+                music.stop();
                 killed(player);
                 player.freeze();
             }
@@ -161,22 +203,34 @@ scene("game", (levelNumber = 0) => {
     });
 
     player.onCollide("bigMushy", (mushy) => {
+        play("powerup", { volume: 0.5 });
         mushy.destroy();
         player.bigger();
     });
 
+    player.onCollide("lifeMushy", (mushy) => {
+        play("oneUp", { volume: 0.5 });
+        mushy.destroy();
+        lifeLabel.value++;
+        lifeLabel.text = "x" + lifeLabel.value;
+    });
+
     player.onCollide("flower", (flower) => {
+        play("powerup", { volume: 0.5 });
         flower.destroy();
         player.flaming();
     });
 
     player.onCollide("coin", (coin) => {
+        play("coin", { volume: 0.5 });
         coin.destroy();
-        scoreLabel.value += 1;
+        scoreLabel.value++;
         scoreLabel.text = "x" + scoreLabel.value;
     });
 
     player.onCollide("castle", (castle, side) => {
+        play("stageClear");
+        music.stop();
         player.freeze();
         add([
             text("Well Done!", { size: 24 }),
@@ -199,14 +253,20 @@ scene("game", (levelNumber = 0) => {
     player.on("headbutt", (obj) => {
         if (obj.is("questionBox")) {
             if (obj.is("coinBox")) {
+                play("coin", { volume: 0.5 });
                 let coin = level.spawn("c", obj.gridPos.sub(0, 1));
                 coin.bump();
                 coin.use(lifespan(0.4, { fade: 0.01 }));
-                scoreLabel.value += 1;
+                scoreLabel.value++;
                 scoreLabel.text = "x" + scoreLabel.value;
             } else if (obj.is("mushyBox")) {
+                play("powerupAppears", { volume: 0.5 })
                 level.spawn("M", obj.gridPos.sub(0, 1));
+            } else if (obj.is("lifeMushyBox")) {
+                play("powerupAppears", { volume: 0.5 })
+                level.spawn("L", obj.gridPos.sub(0, 1));
             } else if (obj.is("flowerBox")) {
+                play("powerupAppears", { volume: 0.5 })
                 level.spawn("F", obj.gridPos.sub(0, 1));
             }
 
@@ -214,6 +274,12 @@ scene("game", (levelNumber = 0) => {
             destroy(obj);
             var box = level.spawn("!", pos);
             box.bump();
+        } else if (obj.is("brick")) {
+            if (player.isBig) {
+                obj.destroy();
+                play("brick", { volume: 0.5 });
+            }
+
         }
     });
 });

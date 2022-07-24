@@ -1,4 +1,4 @@
-export function patrol(distance = 100, speed = 50, dir = 1) {
+export function patrol(speed = 50, dir = 1) {
     return {
         id: "patrol",
         require: ["pos", "area",],
@@ -6,13 +6,15 @@ export function patrol(distance = 100, speed = 50, dir = 1) {
         add() {
             this.startingPos = this.pos;
             this.on("collide", (obj, side) => {
-                if (side === "left" || side === "right") {
-                    dir = -dir;
+                if (!obj.is("ground") && !obj.is("brick") && !obj.is("mushyBox") && !obj.is("coinBox")) {
+                    if (side.isLeft() || side.isRight()) {
+                        dir = -dir;
+                    }
                 }
             });
         },
         update() {
-            if (Math.abs(this.pos.x - this.startingPos.x) >= distance) {
+            if (Math.abs(this.pos.x - this.startingPos.x) >= 9999999) {
                 dir = -dir;
             }
             this.move(speed * dir, 0);
@@ -83,7 +85,7 @@ export function mario() {
         require: ["body", "area", "sprite", "bump"],
         smallAnimation: "Running",
         bigAnimation: "RunningBig",
-        flamingAnimation: "FlamingMario",
+        flamingAnimation: "RunningFlame",
         smallStopFrame: 0,
         bigStopFrame: 8,
         flamingStopFrame: 17,

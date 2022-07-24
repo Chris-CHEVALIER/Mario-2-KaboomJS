@@ -18,7 +18,7 @@ export const LEVELS = [
         "                                                                                                ",
         "                                                                                                ",
         "                                                                                                ",
-        "               f                                                                                ",
+        "               l                                                                                ",
         "                                                                                                ",
         "                                                                                                ",
         "                                                                                                ",
@@ -127,6 +127,14 @@ export const levelConf = {
         'questionBox',
         'mushyBox'
     ],
+    "l": () => [
+        sprite("questionBox"),
+        area(),
+        solid(),
+        origin("bot"),
+        'questionBox',
+        'lifeMushyBox'
+    ],
     "f": () => [
         sprite("questionBox"),
         area(),
@@ -157,18 +165,28 @@ export const levelConf = {
         sprite("bigMushy"),
         area(),
         solid(),
-        patrol(10000),
+        patrol(),
         body(),
         cleanup(),
         origin("bot"),
         "bigMushy"
+    ],
+    "L": () => [
+        sprite("lifeMushy"),
+        area(),
+        solid(),
+        patrol(),
+        body(),
+        cleanup(),
+        origin("bot"),
+        "lifeMushy"
     ],
     "F": () => [
         sprite("flower"),
         area(),
         solid(),
         scale(0.7),
-        //patrol(10000),
+        //patrol(),
         body(),
         cleanup(),
         origin("bot"),
@@ -179,7 +197,7 @@ export const levelConf = {
         area(),
         solid(),
         scale(0.09),
-        //patrol(10000),
+        //patrol(),
         body(),
         cleanup(),
         origin("bot"),
@@ -204,7 +222,7 @@ export const levelConf = {
         area({ width: 16, height: 16 }),
         solid(),
         body(),
-        patrol(50),
+        patrol(),
         enemy(),
         origin("bot"),
         "goomba"
@@ -214,7 +232,7 @@ export const levelConf = {
         area({ width: 16, height: 16 }),
         solid(),
         body(),
-        patrol(70),
+        patrol(),
         enemy(),
         origin("bot"),
         "koopa"
