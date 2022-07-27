@@ -22,6 +22,23 @@ export function patrol(speed = 50, dir = 1) {
     };
 }
 
+export function forward(speed = 80, dir = 1) {
+    return {
+        id: "forward",
+        require: ["pos", "area",],
+        startingPos: vec2(player.pos.x, player.pos.y),
+        add() {
+            this.startingPos = this.pos;
+            this.on("collide", (obj, side) => {
+                this.destroy();
+            });
+        },
+        update() {
+            this.move(speed * dir, 0);
+        },
+    };
+}
+
 export function enemy() {
     return {
         id: "enemy",
@@ -144,6 +161,9 @@ export function mario() {
                 this.play(animation);
             }
         },
+        sendingFireBall() {
+            console.log("sendingFireBall");
+        },
         freeze() {
             this.isFrozen = true;
         },
@@ -151,10 +171,10 @@ export function mario() {
             this.unuse("body");
             this.freeze();
             wait(0.8, () => {
-                this.bump();
+                //this.bump(15, 8);
+                this.use(lifespan(1, { fade: 1 }));
             });
             this.isAlive = false;
-            //this.use(lifespan(1, { fade: 1 }));
         }
     }
 }

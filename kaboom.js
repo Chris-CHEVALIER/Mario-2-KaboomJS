@@ -2,7 +2,7 @@ import kaboom from './kaboom.mjs';
 
 // Configurations globales
 export const k = kaboom({
-    background: [134, 135, 247],
+    
     fullscreen: true,
     scale: 2,
 });
@@ -38,6 +38,7 @@ loadSound("pause", "sounds/pause.wav");
 loadSound("powerup", "sounds/powerup.wav");
 loadSound("powerupAppears", "sounds/powerupAppears.wav");
 loadSound("stageClear", "sounds/stageClear.wav");
+loadSound("pipe", "sounds/pipe.wav");
 loadSound("goombaStomp", "sounds/goombaStomp.mp3");
 loadSound("brick", "sounds/brick.mp3");
 

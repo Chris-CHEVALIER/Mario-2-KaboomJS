@@ -3,8 +3,9 @@ import { LEVELS, levelConf } from "./gameConfiguration.js";
 import { killed } from "./functions.js";
 
 scene("start", () => {
+    play("coin", { loop: false });
     add([
-        text("Press enter to start", { size: 24 }),
+        text("Appuyez sur la touche Entree pour jouer", { size: 24 }),
         pos(width() / 2, height() / 2),
         origin("center"),
         color(255, 255, 255),
@@ -12,7 +13,7 @@ scene("start", () => {
 
     onKeyRelease("enter", () => {
         go("game");
-    })
+    });
 });
 
 go("start");
@@ -21,7 +22,7 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
     layers(["bg", "game", "ui"], "game");
 
     const level = addLevel(LEVELS[levelNumber], levelConf);
-    const music = play("theme", { loop: true })
+    const music = play("theme", { loop: true });
 
     const scoreLabel = add([
         text("x0", { size: 12 }),
@@ -85,19 +86,23 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
     const player = level.spawn("p", 1, 10);
 
     onKeyDown("right", () => {
-        player.flipX(false);
-        player.move(player.speed, 0);
+        if (!player.isFrozen && player.isAlive) {
+            player.flipX(false);
+            player.move(player.speed, 0);
+        }
     });
 
     onKeyDown("left", () => {
-        player.flipX(true);
-        if (toScreen(player.pos).x > 20) {
+        if (!player.isFrozen && player.isAlive) {
+            player.flipX(true);
+
             player.move(-player.speed, 0);
+
         }
     });
 
     onKeyDown("down", () => {
-        if (player.isBig) {
+        if (player.isBig && player.isGrounded()) {
             player.isDown = true;
         }
     });
@@ -117,7 +122,8 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
     })
 
     onKeyPress("space", () => {
-        if (player.isGrounded()) {
+        if (!player.isFrozen && player.isAlive && player.isGrounded()) {
+            player.isDown = false;
             play(player.isBig ? "jumpBig" : "jumpSmall", { volume: 0.5 });
             player.jump();
             canSquash = true;
@@ -125,24 +131,18 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
     });
 
     onKeyPress("b", () => {
-        if (player.isFlaming()) {
-            //player.sendFireball();
+        if (player.isFlaming) {
+            player.sendingFireBall();
         }
-    });
-
-    onKeyPress("s", () => {
-        console.log("launch music");
-        var audio = new Audio("./assets/musics/main-theme.mp3");
-        audio.play();
     });
 
     player.onUpdate(() => {
         var currCam = camPos();
-        if (currCam.x < player.pos.x) {
+        if (currCam.x < player.pos.x || currCam.x > player.pos.x) {
             camPos(player.pos.x, currCam.y);
         }
         if (player.isDown) {
-            player.frame = 14;
+            player.frame = player.isFlaming ? 23 : 14;
         }
         if (player.isAlive) {
             canSquash = !player.isGrounded()
@@ -161,7 +161,11 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
             baddy.squash();
         } else {
             if (player.isBig) {
+                play("pipe", { volume: 0.5 });
                 player.smaller();
+            } else if (player.isFlaming) {
+                play("pipe", { volume: 0.5 });
+                player.bigger();
             } else {
                 play("marioDies", { volume: 1 });
                 music.stop();
@@ -170,7 +174,6 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
                 lifeLabel.value--;
                 lifeNumber--;
                 lifeLabel.text = "x" + lifeLabel.value;
-                console.log(lifeLabel.value);
                 if (lifeLabel.value <= 0 || lifeNumber <= 0) {
                     add([
                         text("Game Over...", { size: 24 }),
@@ -192,7 +195,11 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
             koopa.toShell();
         } else {
             if (player.isBig) {
+                play("pipe", { volume: 0.5 });
                 player.smaller();
+            } else if (player.isFlaming) {
+                play("pipe", { volume: 0.5 });
+                player.bigger();
             } else {
                 play("marioDies", { volume: 1 });
                 music.stop();
@@ -228,6 +235,22 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
         scoreLabel.text = "x" + scoreLabel.value;
     });
 
+    player.onCollide("pipe", (pipe) => {
+        onKeyPress("down", () => {
+            play("pipe");
+            wait(0.5, () => {
+                let nextLevel = levelNumber + 1;
+                if (nextLevel >= LEVELS.length) {
+                    go("start");
+                } else {
+                    music.stop();
+                    console.log(k);
+                    go("game", nextLevel);
+                }
+            });
+        });
+    });
+
     player.onCollide("castle", (castle, side) => {
         play("stageClear");
         music.stop();
@@ -239,15 +262,14 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
             origin("center"),
             layer('ui'),
         ]);
-        wait(1, () => {
+        wait(6, () => {
             let nextLevel = levelNumber + 1;
-
             if (nextLevel >= LEVELS.length) {
                 go("start");
             } else {
                 go("game", nextLevel);
             }
-        })
+        });
     });
 
     player.on("headbutt", (obj) => {
@@ -269,7 +291,6 @@ scene("game", (levelNumber = 0, lifeNumber = 3) => {
                 play("powerupAppears", { volume: 0.5 })
                 level.spawn("F", obj.gridPos.sub(0, 1));
             }
-
             var pos = obj.gridPos;
             destroy(obj);
             var box = level.spawn("!", pos);
